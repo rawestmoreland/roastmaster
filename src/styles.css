@@ -1,0 +1,215 @@
+/* src/styles.css */
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Boogaloo&family=Archivo:wght@400;700;900&display=swap");
+
+/* ─── raw palette ─────────────────────────────────────────────────────────────
+   Define the raw hex values once here. Everything below references these.
+   Never use these directly in components — use the semantic tokens instead.
+──────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* brand */
+  --rm-yellow-raw:   #FFE500;
+  --rm-yellow-dim:   #BFA900;   /* muted yellow for secondary text */
+  --rm-red-raw:      #FF4D4D;
+  --rm-red-dark:     #CC2E2E;   /* hover state */
+
+  /* surfaces */
+  --rm-bg-raw:       #0E0E0E;   /* page / card background */
+  --rm-surface-1:    #1A1A1A;   /* one step up — input bg, pill bg */
+  --rm-surface-2:    #252525;   /* two steps up — hover states */
+  --rm-border:       #2A2A2A;   /* default border */
+  --rm-border-dim:   #1F1F1F;   /* subtle dividers */
+
+  /* text */
+  --rm-text-primary:   #F0F0F0;
+  --rm-text-secondary: #888888;
+  --rm-text-muted:     #444444;
+  --rm-text-disabled:  #333333;
+
+  /* game state — round status colours */
+  --rm-state-answering:  #5B7FFF;   /* blue  — players are writing */
+  --rm-state-judging:    #FFB020;   /* amber — AI is thinking */
+  --rm-state-reveal:     #20D9B5;   /* teal  — scores are in */
+  --rm-state-error:      #FF4D4D;   /* red   — something went wrong */
+  --rm-state-ended:      #888888;   /* gray  — game over */
+
+  /* player chip palette — 6 slots, cycles for up to 6 players distinctly */
+  --rm-chip-0-bg:      #1A2A1A;
+  --rm-chip-0-border:  #2D5C2D;
+  --rm-chip-0-avatar:  #4CAF50;
+  --rm-chip-0-text:    #7EC87E;
+
+  --rm-chip-1-bg:      #2A1A1A;
+  --rm-chip-1-border:  #5C2D2D;
+  --rm-chip-1-avatar:  #FF4D4D;
+  --rm-chip-1-text:    #FF8888;
+
+  --rm-chip-2-bg:      #1A1A2A;
+  --rm-chip-2-border:  #2D2D5C;
+  --rm-chip-2-avatar:  #5B7FFF;
+  --rm-chip-2-text:    #8899FF;
+
+  --rm-chip-3-bg:      #2A1F0A;
+  --rm-chip-3-border:  #5C4510;
+  --rm-chip-3-avatar:  #FFB020;
+  --rm-chip-3-text:    #FFD070;
+
+  --rm-chip-4-bg:      #1F0A2A;
+  --rm-chip-4-border:  #450F5C;
+  --rm-chip-4-avatar:  #C060FF;
+  --rm-chip-4-text:    #D090FF;
+
+  --rm-chip-5-bg:      #0A2A24;
+  --rm-chip-5-border:  #0F5C4E;
+  --rm-chip-5-avatar:  #20D9B5;
+  --rm-chip-5-text:    #60F0D0;
+}
+
+/* ─── tailwind theme tokens ───────────────────────────────────────────────────
+   These expose the raw values to Tailwind's utility classes.
+   e.g. bg-rm-bg, text-rm-yellow, border-rm-border, etc.
+──────────────────────────────────────────────────────────────────────────── */
+@theme inline {
+  /* brand */
+  --color-rm-yellow:     var(--rm-yellow-raw);
+  --color-rm-yellow-dim: var(--rm-yellow-dim);
+  --color-rm-red:        var(--rm-red-raw);
+  --color-rm-red-dark:   var(--rm-red-dark);
+
+  /* surfaces */
+  --color-rm-bg:         var(--rm-bg-raw);
+  --color-rm-surface-1:  var(--rm-surface-1);
+  --color-rm-surface-2:  var(--rm-surface-2);
+  --color-rm-border:     var(--rm-border);
+  --color-rm-border-dim: var(--rm-border-dim);
+
+  /* text */
+  --color-rm-text:           var(--rm-text-primary);
+  --color-rm-text-secondary: var(--rm-text-secondary);
+  --color-rm-text-muted:     var(--rm-text-muted);
+  --color-rm-text-disabled:  var(--rm-text-disabled);
+
+  /* game states */
+  --color-rm-answering: var(--rm-state-answering);
+  --color-rm-judging:   var(--rm-state-judging);
+  --color-rm-reveal:    var(--rm-state-reveal);
+  --color-rm-error:     var(--rm-state-error);
+  --color-rm-ended:     var(--rm-state-ended);
+
+  /* typography */
+  --font-display: "Boogaloo", cursive;
+  --font-body:    "Archivo", sans-serif;
+}
+
+/* ─── base layer ──────────────────────────────────────────────────────────────
+   Global defaults — applied once, not repeated per component.
+──────────────────────────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: var(--font-body);
+    background-color: var(--rm-bg-raw);
+    color: var(--rm-text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body, #app {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  /* headings use the display font by default */
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    color: var(--rm-text-primary);
+  }
+}
+
+/* ─── component layer ─────────────────────────────────────────────────────────
+   Reusable classes that aren't expressible as a single utility.
+   Keep this small — prefer Tailwind utilities in JSX over adding here.
+──────────────────────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* the dashed stripe pattern on the start button */
+  .rm-stripe {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 4px,
+      rgba(255, 255, 255, 0.04) 4px,
+      rgba(255, 255, 255, 0.04) 8px
+    );
+  }
+
+  /* dashed horizontal rule (lobby divider) */
+  .rm-dash-rule {
+    height: 2px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--rm-border) 0px,
+      var(--rm-border) 8px,
+      transparent 8px,
+      transparent 14px
+    );
+  }
+
+  /* game-state badge — combine with a state colour utility */
+  .rm-status-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+           text-xs font-bold tracking-widest uppercase font-body;
+  }
+}
+
+/* ─── keyframes ───────────────────────────────────────────────────────────────
+   Defined globally so any component can reference them by name.
+──────────────────────────────────────────────────────────────────────────── */
+@keyframes rm-ticker {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(-100%); }
+}
+
+@keyframes rm-pulse-code {
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%       { opacity: 0.85; transform: scale(1.015); }
+}
+
+@keyframes rm-chip-in {
+  from { opacity: 0; transform: scale(0.5) rotate(-6deg); }
+  to   { opacity: 1; transform: scale(1)   rotate(0deg); }
+}
+
+@keyframes rm-dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40%           { transform: translateY(-5px); }
+}
+
+@keyframes rm-score-slam {
+  0%   { opacity: 0; transform: scale(2) rotate(-3deg); }
+  60%  { transform: scale(0.95) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1)  rotate(0deg); }
+}
+
+/* ─── animation utilities ─────────────────────────────────────────────────────
+   Tailwind v4 lets you reference keyframes directly in arbitrary values,
+   but naming them here keeps component JSX clean.
+──────────────────────────────────────────────────────────────────────────── */
+@layer utilities {
+  .animate-rm-ticker {
+    animation: rm-ticker 18s linear infinite;
+  }
+  .animate-rm-pulse-code {
+    animation: rm-pulse-code 2s ease-in-out infinite;
+  }
+  .animate-rm-chip-in {
+    animation: rm-chip-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .animate-rm-dot-bounce {
+    animation: rm-dot-bounce 1.2s ease-in-out infinite;
+  }
+  .animate-rm-score-slam {
+    animation: rm-score-slam 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
