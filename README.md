@@ -1,204 +1,154 @@
-Welcome to your new TanStack Start app! 
+# Roastmaster
 
-# Getting Started
+> An AI-judged multiplayer party game where your wit gets scored and your answers get roasted.
 
-To run this application:
+**How it works:** Create a room, share the 6-character code, answer absurd prompts — then sit back while Claude reads your submissions, scores them 0–100 on wit + absurdity + relevance, and delivers a savage-but-friendly roast for each one. Results pop in live for everyone in the room.
+
+---
+
+## Stack
+
+| Layer | Tech |
+|---|---|
+| Frontend | React 19 + Vite + TanStack Router (file-based) |
+| Backend | [PocketBase](https://pocketbase.io/) (Go) with custom API routes |
+| Realtime | PocketBase SSE subscriptions |
+| AI Judge | Anthropic Claude via Messages API |
+| Styling | Tailwind CSS v4 + design tokens |
+
+---
+
+## Getting Started
+
+You need two processes running: the PocketBase backend and the Vite dev server.
+
+### 1. Backend
+
+```bash
+cd pocketbase/base
+cp .env.example .env      # add your ANTHROPIC_API_KEY
+make run                  # go run . serve --http="127.0.0.1:8080"
+```
+
+The first run will bootstrap the SQLite database and all collections automatically. The admin UI is available at `http://127.0.0.1:8080/_/`.
+
+**Required env var:**
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+### 2. Frontend
 
 ```bash
 npm install
-npm run dev
+npm run dev               # starts on http://localhost:3000
 ```
 
-# Building For Production
+Open two browser tabs, create a game in one, join with the code in the other. Hit **Start** and start typing nonsense.
 
-To build this application for production:
+---
+
+## Project Structure
+
+```
+roastmaster/
+├── src/
+│   ├── components/
+│   │   ├── game/             # in-game screens (answer, judging, reveal, game over)
+│   │   ├── landing.tsx       # home page
+│   │   ├── lobby.tsx         # waiting room with realtime player list
+│   │   └── join.tsx          # join-by-code flow
+│   ├── routes/               # TanStack Router file-based routes
+│   ├── contexts/             # PocketBase client context
+│   ├── hooks/                # useSession (player token management)
+│   └── styles.css            # design tokens + Tailwind theme
+└── pocketbase/base/
+    ├── main.go               # server setup, route registration, judge hook
+    ├── judge.go              # AI scoring logic
+    ├── lobby.go              # create/join/start/leave handlers
+    ├── rounds.go             # round creation and answer submission
+    └── presence.go           # disconnect detection + host promotion
+```
+
+---
+
+## How the AI Judging Works
+
+When all answers are submitted, the host triggers judging. PocketBase flips the round `status` to `"judging"`, which fires a hook in `main.go`. The hook calls `judgeRound()` in `judge.go`, which:
+
+1. Fetches all answers for the round
+2. Sends the prompt + numbered answers to Claude with this system prompt:
+
+   > *You are the host of a chaotic party game. Score each answer 0–100 on wit + absurdity + relevance, and write ONE short savage-but-friendly roast (≤20 words).*
+
+3. Parses the JSON verdict array from Claude's response
+4. Writes scores + critiques back to each `answer` record
+5. Accumulates scores on each `player` record
+6. Flips the round to `"reveal"`
+
+PocketBase's realtime layer broadcasts every `Save()` as an SSE event — so each player's score and roast pops in on every connected client the moment it's written, no polling needed.
+
+---
+
+## Game Flow
+
+```
+lobby (waiting) → answering → judging → reveal → [next round or game over]
+```
+
+- **Lobby**: Players join by code. The host sees a Start button once at least one other player is in.
+- **Answering**: Everyone gets the same prompt and a timer. Submit before time runs out.
+- **Judging**: Claude is thinking. A spinner taunts you.
+- **Reveal**: Scores and roasts appear live, one player at a time as Claude responds.
+- **Game Over**: Final leaderboard. The highest-scoring player is crowned Roastmaster.
+
+**Presence / host promotion**: If a player disconnects mid-game, `presence.go` flips them to `disconnected` and promotes the oldest remaining active player to host. If everyone leaves, the game ends.
+
+---
+
+## PocketBase Collections
+
+| Collection | Key fields |
+|---|---|
+| `games` | `code`, `status` (lobby/playing/ended), `host`, `totalRounds`, `currentRound` |
+| `players` | `game`, `name`, `token`, `status` (active/disconnected), `score` |
+| `rounds` | `game`, `prompt`, `index`, `status` (answering/judging/reveal/error) |
+| `answers` | `round`, `player`, `text`, `score`, `critique` |
+
+Player auth is token-based (not PocketBase's built-in auth). On create/join the backend returns a random hex token once. The client stores it in memory and sends it as `X-Player-Token` on privileged calls (start game, leave).
+
+---
+
+## Commands
+
+### Frontend
 
 ```bash
-npm run build
+npm run dev       # dev server on port 3000
+npm run build     # production build
+npm run test      # Vitest
+npm run lint      # Biome lint
+npm run format    # Biome format
+npm run check     # lint + format check combined
 ```
 
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+### Backend
 
 ```bash
-npm run test
+make run          # go run . serve --http="127.0.0.1:8080"
+make build        # docker compose build pocketbase
+make recreate     # docker compose up --force-recreate -d
 ```
 
-## Styling
+---
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+## Contributing
 
-### Removing Tailwind CSS
+Bug reports, roast-quality improvements, and new prompt ideas are all welcome. Open an issue or send a PR.
 
-If you prefer not to use Tailwind CSS:
+---
 
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `npm install @tailwindcss/vite tailwindcss -D`
+## License
 
-## Linting & Formatting
-
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
-
-
-```bash
-npm run lint
-npm run format
-npm run check
-```
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+MIT
