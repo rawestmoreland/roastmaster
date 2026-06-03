@@ -66,10 +66,10 @@ export function Landing({ onCreateGame, onJoinGame }: LandingProps) {
     <div className='w-full max-w-md'>
       {/* logo */}
       <div className='text-center mb-8'>
-        <h1 className='font-display text-7xl text-rm-yellow leading-none tracking-wide'>
+        <h1 className='font-display text-7xl text-rm-text leading-none tracking-wide'>
           ROAST
         </h1>
-        <h1 className='font-display text-7xl text-rm-red leading-none tracking-wide -mt-2'>
+        <h1 className='font-display text-7xl text-rm-accent leading-none tracking-wide -mt-2'>
           MASTER
         </h1>
         <p className='text-rm-text-secondary text-sm mt-3 tracking-widest uppercase font-bold'>
@@ -91,7 +91,7 @@ export function Landing({ onCreateGame, onJoinGame }: LandingProps) {
               className={[
                 'py-3.5 font-display text-[15px] tracking-[0.08em] uppercase transition-colors',
                 tab === t
-                  ? 'text-rm-yellow border-b-2 border-rm-yellow bg-rm-surface-2'
+                  ? 'text-rm-text border-b-2 border-rm-text bg-rm-surface-1'
                   : 'text-rm-text-muted hover:text-rm-text-secondary',
               ].join(' ')}
             >
@@ -113,7 +113,7 @@ export function Landing({ onCreateGame, onJoinGame }: LandingProps) {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='w-full bg-rm-bg border border-rm-border rounded-lg px-4 py-3 text-rm-text text-[15px] placeholder:text-rm-text-disabled focus:outline-none focus:border-rm-yellow transition-colors'
+              className='w-full bg-rm-bg border border-rm-border rounded-lg px-4 py-3 text-rm-text text-[15px] placeholder:text-rm-text-disabled focus:outline-none focus:border-rm-accent transition-colors'
             />
           </div>
 
@@ -131,8 +131,8 @@ export function Landing({ onCreateGame, onJoinGame }: LandingProps) {
                     className={[
                       'flex-1 py-2.5 rounded-lg font-display text-[18px] tracking-wide transition-colors',
                       rounds === n
-                        ? 'bg-rm-red text-white'
-                        : 'bg-rm-bg border border-rm-border text-rm-text-secondary hover:border-rm-red hover:text-rm-red',
+                        ? 'bg-rm-accent text-rm-text-on-accent'
+                        : 'bg-rm-bg border border-rm-border text-rm-text-secondary hover:border-rm-accent hover:text-rm-accent',
                     ].join(' ')}
                   >
                     {n}
@@ -154,7 +154,7 @@ export function Landing({ onCreateGame, onJoinGame }: LandingProps) {
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 onKeyDown={handleKeyDown}
-                className='w-full bg-rm-bg border border-rm-border rounded-lg px-4 py-3 text-rm-yellow font-display text-[28px] tracking-[0.3em] text-center placeholder:text-rm-text-disabled placeholder:text-[15px] placeholder:tracking-normal placeholder:font-body focus:outline-none focus:border-rm-yellow transition-colors uppercase'
+                className='w-full bg-rm-bg border border-rm-border rounded-lg px-4 py-3 text-rm-text font-mono text-[28px] tracking-[0.3em] text-center placeholder:text-rm-text-disabled placeholder:text-[15px] placeholder:tracking-normal placeholder:font-body focus:outline-none focus:border-rm-accent transition-colors uppercase'
               />
             </div>
           )}
@@ -174,7 +174,7 @@ export function Landing({ onCreateGame, onJoinGame }: LandingProps) {
               'w-full py-3.5 rounded-lg font-display text-[22px] tracking-[0.06em]',
               'transition-transform duration-100 relative overflow-hidden',
               !loading
-                ? 'bg-rm-red text-white hover:bg-rm-red-dark hover:-translate-y-px active:translate-y-px rm-stripe cursor-pointer'
+                ? 'bg-rm-accent text-rm-text-on-accent hover:bg-rm-accent-dark hover:-translate-y-px active:translate-y-px rm-stripe cursor-pointer'
                 : 'bg-rm-surface-2 text-rm-text-disabled cursor-not-allowed',
             ].join(' ')}
           >

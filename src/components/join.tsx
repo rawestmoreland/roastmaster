@@ -70,7 +70,7 @@ export function Join({ code, onJoined, onBack }: JoinProps) {
           <p className='text-[11px] font-bold tracking-[0.2em] uppercase text-rm-text-secondary mb-1'>
             Joining room
           </p>
-          <p className='font-display text-4xl text-rm-yellow tracking-[0.15em]'>
+          <p className='font-mono italic text-4xl text-rm-text tracking-[0.15em]'>
             {code}
           </p>
         </div>
@@ -88,7 +88,7 @@ export function Join({ code, onJoined, onBack }: JoinProps) {
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-              className='w-full bg-rm-bg border border-rm-border rounded-lg px-4 py-3 text-rm-text text-[15px] placeholder:text-rm-text-disabled focus:outline-none focus:border-rm-yellow transition-colors'
+              className='w-full bg-rm-bg border border-rm-border rounded-lg px-4 py-3 text-rm-text text-[15px] placeholder:text-rm-text-disabled focus:outline-none focus:border-rm-accent transition-colors'
             />
           </div>
 
@@ -105,7 +105,7 @@ export function Join({ code, onJoined, onBack }: JoinProps) {
               'w-full py-3.5 rounded-lg font-display text-[22px] tracking-[0.06em]',
               'transition-transform duration-100 relative overflow-hidden',
               !loading
-                ? 'bg-rm-red text-white hover:bg-rm-red-dark hover:-translate-y-px active:translate-y-px rm-stripe cursor-pointer'
+                ? 'bg-rm-accent text-rm-text-on-accent hover:bg-rm-accent-dark hover:-translate-y-px active:translate-y-px rm-stripe cursor-pointer'
                 : 'bg-rm-surface-2 text-rm-text-disabled cursor-not-allowed',
             ].join(' ')}
           >

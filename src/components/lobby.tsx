@@ -2,24 +2,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { RecordSubscription } from 'pocketbase';
 import { usePocketBase } from '@/contexts/pocketbase';
+import type { Game, Player } from '#/types/game';
 
 // ─── types ────────────────────────────────────────────────────────────────────
-
-interface Game {
-  id: string;
-  code: string;
-  status: 'lobby' | 'playing' | 'ended';
-  host: string;
-  totalRounds: number;
-}
-
-interface Player {
-  id: string;
-  name: string;
-  status: 'active' | 'disconnected';
-  game: string;
-  score: number;
-}
 
 interface LobbyProps {
   game: Game;
@@ -32,12 +17,8 @@ interface LobbyProps {
 
 const CHIP_COUNT = 6;
 
-const TICKER_TEXT = Array(4)
-  .fill(
-    '★ ROASTMASTER ★ \u00a0\u00a0\u00a0 get ready to get absolutely destroyed ' +
-      '\u00a0\u00a0\u00a0 ★ ROASTMASTER ★ \u00a0\u00a0\u00a0 the AI has no mercy ' +
-      '\u00a0\u00a0\u00a0 ★ ROASTMASTER ★ \u00a0\u00a0\u00a0 your friends are judging you \u00a0\u00a0\u00a0',
-  )
+const TICKER_TEXT = Array(6)
+  .fill('ROASTMASTER  ·  AI-judged party game  ·  ')
   .join('');
 
 function chipStyle(index: number): React.CSSProperties {
@@ -55,7 +36,7 @@ function chipStyle(index: number): React.CSSProperties {
 
 function Ticker() {
   return (
-    <div className='bg-rm-yellow text-rm-bg font-display text-[13px] tracking-[0.08em] py-1.5 overflow-hidden whitespace-nowrap'>
+    <div className='bg-rm-text text-rm-bg font-display text-[13px] tracking-[0.08em] py-1.5 overflow-hidden whitespace-nowrap'>
       <span className='inline-block animate-rm-ticker'>{TICKER_TEXT}</span>
     </div>
   );
@@ -79,7 +60,7 @@ function PlayerChip({
     >
       {/* avatar circle */}
       <div
-        className='w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10px] font-black shrink-0'
+        className='w-5.5 h-5.5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0'
         style={{
           background: `var(--rm-chip-${index % CHIP_COUNT}-avatar)`,
           color: `var(--rm-chip-${index % CHIP_COUNT}-avatar-text, #fff)`,
@@ -92,7 +73,7 @@ function PlayerChip({
 
       {isHost && (
         <span
-          className='text-[9px] font-bold tracking-[0.1em] uppercase px-1.5 py-px rounded-[3px] ml-0.5'
+          className='text-[9px] font-bold tracking-widest uppercase px-1.5 py-px rounded-[3px] ml-0.5'
           style={{
             background: `var(--rm-chip-${index % CHIP_COUNT}-border)`,
             color: `var(--rm-chip-${index % CHIP_COUNT}-text)`,
@@ -112,7 +93,7 @@ function WaitingDots() {
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className='w-1.5 h-1.5 rounded-full bg-rm-border block animate-rm-dot-bounce'
+            className='w-1.5 h-1.5 rounded-full bg-rm-border-strong block animate-rm-dot-bounce'
             style={{ animationDelay: `${i * 0.2}s` }}
           />
         ))}
@@ -212,15 +193,15 @@ export function Lobby({ game, myPlayerId, myToken, onGameStart }: LobbyProps) {
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <div className='bg-rm-bg rounded-xl overflow-hidden font-body min-h-[520px]'>
+    <div className='bg-rm-bg rounded-xl overflow-hidden font-body min-h-130'>
       <Ticker />
 
       {/* two-column body */}
-      <div className='grid grid-cols-2 min-h-[460px]'>
+      <div className='grid grid-cols-2 min-h-115'>
         {/* ── left: code + controls ── */}
-        <div className='flex flex-col gap-5 p-7 border-r-2 border-dashed border-rm-border'>
+        <div className='flex flex-col gap-5 p-7 border-r border-rm-border'>
           {/* logo */}
-          <span className='font-display text-[13px] text-rm-red tracking-[0.15em] uppercase'>
+          <span className='font-display text-[13px] text-rm-accent tracking-[0.15em] uppercase'>
             ★ Roastmaster
           </span>
 
@@ -229,7 +210,7 @@ export function Lobby({ game, myPlayerId, myToken, onGameStart }: LobbyProps) {
             <span className='text-[11px] font-bold tracking-[0.2em] uppercase text-rm-text-secondary'>
               Join code
             </span>
-            <span className='font-display text-[72px] leading-none text-rm-yellow tracking-[0.05em] animate-rm-pulse-code'>
+            <span className='font-display italic text-[72px] leading-none text-rm-text tracking-tight animate-rm-pulse-code'>
               {game.code}
             </span>
             <span className='text-[12px] text-rm-text-muted'>
@@ -242,7 +223,7 @@ export function Lobby({ game, myPlayerId, myToken, onGameStart }: LobbyProps) {
 
           {/* settings pills */}
           <div className='flex gap-4 items-center'>
-            <SettingPill icon='↻' label={`${game.totalRounds} rounds`} />
+            <SettingPill icon='↻' label={`${game.total_rounds} rounds`} />
             <SettingPill icon='⏱' label='60s answer' />
           </div>
 
@@ -256,7 +237,7 @@ export function Lobby({ game, myPlayerId, myToken, onGameStart }: LobbyProps) {
                   'w-full py-3.5 rounded-lg font-display text-[22px] tracking-[0.06em]',
                   'transition-transform duration-100 relative overflow-hidden',
                   canStart
-                    ? 'bg-rm-red text-white cursor-pointer hover:bg-rm-red-dark hover:-translate-y-px active:translate-y-px rm-stripe'
+                    ? 'bg-rm-accent text-rm-text-on-accent cursor-pointer hover:bg-rm-accent-dark hover:-translate-y-px active:translate-y-px rm-stripe'
                     : 'bg-rm-surface-1 text-rm-text-disabled cursor-not-allowed',
                 ].join(' ')}
               >
@@ -274,7 +255,7 @@ export function Lobby({ game, myPlayerId, myToken, onGameStart }: LobbyProps) {
               )}
             </div>
           ) : (
-            <div className='w-full py-3.5 rounded-lg bg-rm-surface-1 border border-rm-border text-center text-[13px] text-rm-text-muted font-display tracking-[0.05em]'>
+            <div className='w-full py-3.5 rounded-lg bg-rm-surface-1 border border-rm-border text-center text-[13px] text-rm-text-muted font-display tracking-wider'>
               Waiting for host to start…
             </div>
           )}
@@ -287,7 +268,7 @@ export function Lobby({ game, myPlayerId, myToken, onGameStart }: LobbyProps) {
             <span className='text-[11px] font-bold tracking-[0.2em] uppercase text-rm-text-secondary'>
               Players in lobby
             </span>
-            <span className='font-display text-[15px] text-rm-yellow'>
+            <span className='font-display text-[15px] text-rm-accent'>
               {activePlayers.length} / 8
             </span>
           </div>

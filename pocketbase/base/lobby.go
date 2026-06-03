@@ -86,8 +86,8 @@ func handleCreateGame(e *core.RequestEvent) error {
 	game := core.NewRecord(gamesCol)
 	game.Set("code", code)
 	game.Set("status", "lobby")
-	game.Set("totalRounds", req.TotalRounds)
-	game.Set("currentRound", 0)
+	game.Set("total_rounds", req.TotalRounds)
+	game.Set("current_round", 0)
 	if err := e.App.Save(game); err != nil {
 		return err
 	}

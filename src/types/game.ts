@@ -3,8 +3,8 @@ export interface Game {
   code: string
   status: 'lobby' | 'playing' | 'ended'
   host: string
-  totalRounds: number
-  currentRound: number
+  total_rounds: number
+  current_round: number
 }
 
 export interface Player {
