@@ -196,10 +196,10 @@ export function Lobby({ game, myPlayerId, myToken, onGameStart }: LobbyProps) {
     <div className='bg-rm-bg rounded-xl overflow-hidden font-body min-h-130'>
       <Ticker />
 
-      {/* two-column body */}
-      <div className='grid grid-cols-2 min-h-115'>
+      {/* body — single col on mobile, two-col on md+ */}
+      <div className='grid grid-cols-1 md:grid-cols-2 md:min-h-115'>
         {/* ── left: code + controls ── */}
-        <div className='flex flex-col gap-5 p-7 border-r border-rm-border'>
+        <div className='flex flex-col gap-5 p-5 md:p-7 border-b md:border-b-0 md:border-r border-rm-border'>
           {/* logo */}
           <span className='font-display text-[13px] text-rm-accent tracking-[0.15em] uppercase'>
             ★ Roastmaster
@@ -262,7 +262,7 @@ export function Lobby({ game, myPlayerId, myToken, onGameStart }: LobbyProps) {
         </div>
 
         {/* ── right: player list ── */}
-        <div className='flex flex-col gap-4 p-7'>
+        <div className='flex flex-col gap-4 p-5 md:p-7'>
           {/* header */}
           <div className='flex items-baseline justify-between'>
             <span className='text-[11px] font-bold tracking-[0.2em] uppercase text-rm-text-secondary'>

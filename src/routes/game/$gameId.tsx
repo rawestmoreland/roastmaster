@@ -1,9 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { RecordSubscription } from "pocketbase";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Game, Player, Round } from "#/types/game";
 import { usePocketBase } from "@/contexts/pocketbase";
 import { loadSession } from "@/hooks/useSession";
+import { AnswerScreen } from "@/components/game/AnswerScreen";
+import { GameOver } from "@/components/game/GameOver";
+import { JudgingScreen } from "@/components/game/JudgingScreen";
+import { RevealScreen } from "@/components/game/RevealScreen";
+import { RoundError } from "@/components/game/RoundError";
+import { RoundTransition } from "@/components/game/RoundTransition";
 
 export const Route = createFileRoute("/game/$gameId")({
 	component: GameScreen,
@@ -60,6 +66,8 @@ function GameScreenInner({
 	const pb = usePocketBase();
 	const navigate = useNavigate();
 	const [state, setState] = useState<GameState>({ status: "loading" });
+	const [hostToast, setHostToast] = useState<string | null>(null);
+	const prevHostRef = useRef<string>("");
 
 	// Fetch initial state and set up realtime subscriptions
 	useEffect(() => {
@@ -74,13 +82,14 @@ function GameScreenInner({
 						sort: "-index",
 					}),
 					pb.collection("players").getFullList<Player>({
-						filter: `game = "${gameId}" && status = "active"`,
+						filter: `game = "${gameId}"`,
 						sort: "created",
 					}),
 				]);
 
 				if (cancelled) return;
 
+				prevHostRef.current = game.host;
 				const round = roundsPage.items[0] ?? null;
 
 				if (game.status === "ended") {
@@ -104,6 +113,21 @@ function GameScreenInner({
 						prev.status === "active" || prev.status === "ended"
 							? prev.players
 							: [];
+
+					// Detect host transfer
+					if (
+						prev.status === "active" &&
+						prevHostRef.current &&
+						e.record.host !== prevHostRef.current
+					) {
+						const newHost = players.find((p) => p.id === e.record.host);
+						if (newHost) {
+							setHostToast(newHost.name);
+							setTimeout(() => setHostToast(null), 3000);
+						}
+					}
+					prevHostRef.current = e.record.host;
+
 					if (e.record.status === "ended") {
 						return { status: "ended", game: e.record, players };
 					}
@@ -134,17 +158,16 @@ function GameScreenInner({
 					if (prev.status !== "active" && prev.status !== "ended") return prev;
 					const players = prev.players;
 					if (e.action === "create") {
-						if (e.record.status === "active")
-							return { ...prev, players: [...players, e.record] };
-						return prev;
+						return prev.players.some((p) => p.id === e.record.id)
+							? prev
+							: { ...prev, players: [...players, e.record] };
 					}
 					if (e.action === "update") {
 						return {
 							...prev,
-							players:
-								e.record.status === "disconnected"
-									? players.filter((p) => p.id !== e.record.id)
-									: players.map((p) => (p.id === e.record.id ? e.record : p)),
+							players: players.map((p) =>
+								p.id === e.record.id ? e.record : p,
+							),
 						};
 					}
 					if (e.action === "delete") {
@@ -165,7 +188,7 @@ function GameScreenInner({
 		};
 	}, [gameId, pb]);
 
-	// Unload handler — fire-and-forget DELETE to mark player disconnected
+	// Fire-and-forget DELETE on tab/window close
 	useEffect(() => {
 		const handleUnload = () => {
 			fetch(`/api/players/${myPlayerId}`, {
@@ -180,7 +203,7 @@ function GameScreenInner({
 
 	if (state.status === "loading") {
 		return (
-			<div className="min-h-screen bg-rm-bg flex items-center justify-center gap-1">
+			<div className="min-h-screen bg-rm-bg flex items-center justify-center gap-1.5">
 				{[0, 1, 2].map((i) => (
 					<span
 						key={i}
@@ -198,7 +221,7 @@ function GameScreenInner({
 				<p className="text-rm-error font-body">{state.message}</p>
 				<button
 					type="button"
-					className="text-rm-accent underline font-body text-sm"
+					className="text-rm-accent underline font-body text-sm cursor-pointer"
 					onClick={() => navigate({ to: "/" })}
 				>
 					Go home
@@ -207,31 +230,55 @@ function GameScreenInner({
 		);
 	}
 
-	if (state.status === "ended") {
-		return <div className="text-rm-text">GameOver — coming soon</div>;
-	}
+	const sharedProps: GameScreenProps =
+		state.status === "active"
+			? {
+					game: state.game,
+					round: state.round,
+					players: state.players,
+					myPlayerId,
+					myToken,
+					isHost: state.game.host === myPlayerId,
+				}
+			: {
+					game: state.game,
+					round: null,
+					players: state.players,
+					myPlayerId,
+					myToken,
+					isHost: state.game.host === myPlayerId,
+				};
 
-	const round = state.round;
+	return (
+		<>
+			{state.status === "ended" && (
+				<GameOver
+					game={state.game}
+					players={state.players}
+					myPlayerId={myPlayerId}
+					myToken={myToken}
+				/>
+			)}
 
-	if (!round) {
-		return <div className="text-rm-text">RoundTransition — coming soon</div>;
-	}
+			{state.status === "active" && (() => {
+				const round = state.round;
 
-	if (round.status === "answering") {
-		return <div className="text-rm-text">AnswerScreen — coming soon</div>;
-	}
+				if (!round) return <RoundTransition {...sharedProps} />;
+				if (round.status === "answering") return <AnswerScreen {...sharedProps} />;
+				if (round.status === "judging") return <JudgingScreen {...sharedProps} />;
+				if (round.status === "reveal") return <RevealScreen {...sharedProps} />;
+				if (round.status === "error") return <RoundError {...sharedProps} />;
+				return null;
+			})()}
 
-	if (round.status === "judging") {
-		return <div className="text-rm-text">JudgingScreen — coming soon</div>;
-	}
-
-	if (round.status === "reveal") {
-		return <div className="text-rm-text">RevealScreen — coming soon</div>;
-	}
-
-	if (round.status === "error") {
-		return <div className="text-rm-text">RoundError — coming soon</div>;
-	}
-
-	return null;
+			{/* host transfer toast */}
+			{hostToast && (
+				<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-rm-fade-in">
+					<div className="bg-rm-text text-rm-bg text-sm font-body font-medium px-4 py-2 rounded-full shadow-lg whitespace-nowrap">
+						{hostToast} is now the host
+					</div>
+				</div>
+			)}
+		</>
+	);
 }
